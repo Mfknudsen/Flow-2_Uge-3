@@ -1,0 +1,1 @@
+java -cp flow3-server.jar Server 8080

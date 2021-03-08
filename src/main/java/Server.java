@@ -1,12 +1,14 @@
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Server {
     public static final  int DEFAULT_PORT = 2345;
-    private ServerSocket serverSocket = null;
     private static final List<ClientHandler> handlers = new ArrayList<>();
+    private ServerSocket serverSocket = null;
 
     public static void main(String[] args) throws Exception {
         int port = DEFAULT_PORT;
@@ -47,6 +49,21 @@ public class Server {
             ClientHandler clientHandler = new ClientHandler(id, socket);
             new Thread(clientHandler).start();
             handlers.add(clientHandler);
+        }
+    }
+
+    public void Commands(String command){
+        if(command.equals("ONLINE")){
+            String allMembers = "ONLINE#";
+            for (int i = 0; i < handlers.size(); i++){
+                allMembers += handlers.get(i).getName();
+
+                if(i != handlers.size() - 1)
+                    allMembers += ",";
+            }
+
+            for (ClientHandler handler: handlers)
+                handler.HandleCommand(allMembers);
         }
     }
 }
