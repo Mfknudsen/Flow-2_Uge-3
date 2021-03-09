@@ -5,18 +5,22 @@ import java.util.Scanner;
 public class Client {
     public static void main(String[] args) {
         try {
-            //Socket socket = new Socket(args[0], Integer.parseInt(args[1]));
-            /*TEMP*/Socket socket = new Socket("139.59.215.163", 8080);
-            PrintWriter pw = new PrintWriter(socket.getOutputStream());
-            Scanner ss = new Scanner(socket.getInputStream());
+            Scanner keyboardScanner = new Scanner(System.in);
+            System.out.println("IP:");
+            String ip = keyboardScanner.nextLine();
+            System.out.println("PORT");
+            String port = keyboardScanner.nextLine();
 
-            String[] result = ss.nextLine().split("#");
+            Socket socket = new Socket(ip, Integer.parseInt(port));
+            //Socket socket = new Socket("139.59.215.163", 8080);
+            Scanner scanner = new Scanner(socket.getInputStream());
+            PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 
-            if(result[0].equals("y")){
-                pw.println("You Are Connected As " + result[1] + " With ID " + result[2]);
-            }
-            else if(result[0].equals("n")){
-                pw.println("You Weren't Connected");
+            while (socket.isConnected()){
+                String msg = keyboardScanner.nextLine();
+                System.out.println(msg);
+                pw.println(msg);
+                System.out.println("Message Send");
             }
         } catch (Exception e) {
             e.printStackTrace();

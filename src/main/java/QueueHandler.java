@@ -20,7 +20,6 @@ public class QueueHandler implements Runnable{
                     Thread.sleep(10);
                 }
             } catch (Exception e){
-
             }
         }
     }

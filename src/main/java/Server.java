@@ -57,6 +57,8 @@ public class Server {
     }
 
     public void ServerCommands(String command){
+        System.out.println(command);
+
         String[] commandSplit = command.split("#"), commandValues = new String[commandSplit.length - 1];
         String commandType = commandSplit[0];
         for(int i = 1; i < commandValues.length; i++)
@@ -70,9 +72,8 @@ public class Server {
                 if(i != handlers.size() - 1)
                     allMembers += ",";
             }
-
             for (ClientHandler handler: handlers)
-                handler.HandleCommand(allMembers);
+                handler.PrintString(allMembers);
         } else if(commandType.equals("CLOSE")){
             ClientHandler toDelete = null;
             for (ClientHandler handler: handlers){

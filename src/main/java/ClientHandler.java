@@ -27,6 +27,7 @@ public class ClientHandler implements Runnable{
         try {
             this.scanner = new Scanner(socket.getInputStream());
             this.pw = new PrintWriter(socket.getOutputStream());
+            System.out.println("Client Handler Ready: " + id);
         } catch (Exception e){
         }
     }
@@ -58,7 +59,7 @@ public class ClientHandler implements Runnable{
                     queueHandler.PutString("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
                     return true;
                 default:
-                    queueHandler.PutString("CLOSE#" + id + "#" + 2);
+                    queueHandler.PutString("CLOSE#" + id + "#" + 1);
                     return false;
             }
         } catch (Exception e){
@@ -73,7 +74,9 @@ public class ClientHandler implements Runnable{
             String message = "";
             //Connection
             try {
+                System.out.println("Starting Connection for " + id + ": " + socket.getLocalAddress() + " : " + socket.getLocalPort());
                 message = scanner.nextLine();
+                System.out.println(message);
                 String[] splitMsg = message.split("#");
 
                 if(splitMsg[0].equals("CONNECT")){
