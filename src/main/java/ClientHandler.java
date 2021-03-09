@@ -3,6 +3,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class ClientHandler implements Runnable{
     boolean connected = false;
@@ -13,11 +15,15 @@ public class ClientHandler implements Runnable{
     private Server serverReference = null;
     private PrintWriter pw = null;
     private Scanner scanner = null;
+    private QueueHandler queueHandler = null;
 
-    public ClientHandler(int id, Socket socket) {
+    boolean keepRunning = false;
+
+    public ClientHandler(int id, Socket socket, QueueHandler queueHandler) {
         this.id = id;
-        this.name = name;
         this.socket = socket;
+        this.queueHandler = queueHandler;
+
         try {
             this.scanner = new Scanner(socket.getInputStream());
             this.pw = new PrintWriter(socket.getOutputStream());
@@ -42,38 +48,63 @@ public class ClientHandler implements Runnable{
             return false;
         }
 
-        switch (commandType){
-            case "CLOSE":
-                pw.println("Closing Your Connection");
-                return false;
+        try {
+            switch (commandType) {
+                case "CLOSE":
+                    queueHandler.PutString("CLOSE#" + id + "#" + 0);
+                    return false;
 
-            case "CONNECT":
-
-                return true;
-
-            case "SEND":
-
-                return true;
-
-            default:
-                return false;
+                case "SEND":
+                    queueHandler.PutString("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
+                    return true;
+                default:
+                    queueHandler.PutString("CLOSE#" + id + "#" + 2);
+                    return false;
+            }
+        } catch (Exception e){
+            queueHandler.PutString("CLOSE#"+id+"#"+2);
+            return false;
         }
     }
 
     @Override
     public void run() {
         try {
-            pw.println("Du er forbundet, send en string for at få den uppercase, send 'stop' for at stoppe");
             String message = "";
-            boolean keepRunning = true;
+            //Connection
+            try {
+                message = scanner.nextLine();
+                String[] splitMsg = message.split("#");
+
+                if(splitMsg[0].equals("CONNECT")){
+                    name = splitMsg[1];
+                    keepRunning = true;
+                    pw.println("Du er forbundet, send en string for at få den uppercase, send 'stop' for at stoppe");
+                    queueHandler.PutString("CONNECT#");
+                } else
+                    throw new Exception();
+            } catch (Exception e){
+                queueHandler.PutString("CLOSE#"+id+"#"+1);
+            }
+
+            //Commands
             while (keepRunning) {
+                try {
+                    message = scanner.nextLine();
+                } catch (Exception e){
+                    keepRunning = false;
+                    queueHandler.PutString("CLOSE#"+id+"#"+2);
+                    continue;
+                }
+
                 if (keepRunning)
                     keepRunning = HandleCommand(message);
             }
 
-            pw.println("Forbindelsen lukker");
             socket.close();
-        } catch (Exception e){ }
+        } catch (Exception e){
+            queueHandler.PutString("CLOSE#"+id+"#"+2);
+        }
     }
 
     //region Getters
@@ -85,8 +116,21 @@ public class ClientHandler implements Runnable{
         return name;
     }
 
-    public boolean isActive(){
+    public boolean isConnected(){
         return socket.isConnected();
     }
     //endregion
+
+    public void CloseConnection(int i) {
+        try {
+            pw.println("Forbindelsen lukker: \nCLOSE#" + i);
+            keepRunning = false;
+            socket.close();
+        } catch (Exception e){
+        }
+    }
+
+    public void PrintString(String toPrint){
+        pw.println(toPrint);
+    }
 }

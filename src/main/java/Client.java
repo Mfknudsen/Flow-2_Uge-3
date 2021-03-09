@@ -10,9 +10,6 @@ public class Client {
             PrintWriter pw = new PrintWriter(socket.getOutputStream());
             Scanner ss = new Scanner(socket.getInputStream());
 
-            Scanner keyboard = new Scanner(System.in);
-            pw.println(keyboard.nextLine());
-
             String[] result = ss.nextLine().split("#");
 
             if(result[0].equals("y")){
