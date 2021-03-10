@@ -15,14 +15,14 @@ public class ClientHandler implements Runnable{
     private Server serverReference = null;
     private PrintWriter pw = null;
     private Scanner scanner = null;
-    private QueueHandler queueHandler = null;
+    private Server server;
 
     boolean keepRunning = false;
 
-    public ClientHandler(int id, Socket socket, QueueHandler queueHandler) {
+    public ClientHandler(int id, Socket socket, Server server) {
         this.id = id;
         this.socket = socket;
-        this.queueHandler = queueHandler;
+        this.server = server;
 
         try {
             this.scanner = new Scanner(socket.getInputStream());
@@ -49,22 +49,16 @@ public class ClientHandler implements Runnable{
             return false;
         }
 
-        try {
-            switch (commandType) {
-                case "CLOSE":
-                    queueHandler.PutString("CLOSE#" + id + "#" + 0);
-                    return false;
-
-                case "SEND":
-                    queueHandler.PutString("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
-                    return true;
-                default:
-                    queueHandler.PutString("CLOSE#" + id + "#" + 1);
-                    return false;
-            }
-        } catch (Exception e){
-            queueHandler.PutString("CLOSE#"+id+"#"+2);
-            return false;
+        switch (commandType) {
+            case "CLOSE":
+                server.ServerCommands("CLOSE#" + id + "#" + 0);
+                return false;
+            case "SEND":
+                server.ServerCommands("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
+                return true;
+            default:
+                server.ServerCommands("CLOSE#" + id + "#" + 1);
+                return false;
         }
     }
 
@@ -74,20 +68,17 @@ public class ClientHandler implements Runnable{
             String message = "";
             //Connection
             try {
-                System.out.println("Starting Connection for " + id + ": " + socket.getLocalAddress() + " : " + socket.getLocalPort());
                 message = scanner.nextLine();
-                System.out.println(message);
                 String[] splitMsg = message.split("#");
 
                 if(splitMsg[0].equals("CONNECT")){
                     name = splitMsg[1];
                     keepRunning = true;
-                    pw.println("Du er forbundet, send en string for at få den uppercase, send 'stop' for at stoppe");
-                    queueHandler.PutString("CONNECT#");
+                    server.ServerCommands("ONLINE#");
                 } else
                     throw new Exception();
             } catch (Exception e){
-                queueHandler.PutString("CLOSE#"+id+"#"+1);
+                server.ServerCommands("CLOSE#"+id+"#"+1);
             }
 
             //Commands
@@ -96,7 +87,7 @@ public class ClientHandler implements Runnable{
                     message = scanner.nextLine();
                 } catch (Exception e){
                     keepRunning = false;
-                    queueHandler.PutString("CLOSE#"+id+"#"+2);
+                    server.ServerCommands("CLOSE#"+id+"#"+2);
                     continue;
                 }
 
@@ -106,7 +97,7 @@ public class ClientHandler implements Runnable{
 
             socket.close();
         } catch (Exception e){
-            queueHandler.PutString("CLOSE#"+id+"#"+2);
+            server.ServerCommands("CLOSE#"+id+"#"+2);
         }
     }
 
@@ -134,6 +125,11 @@ public class ClientHandler implements Runnable{
     }
 
     public void PrintString(String toPrint){
-        pw.println(toPrint);
+        try{
+            pw.println(toPrint);
+            System.out.println("Print for " + id + ": " + toPrint);
+        } catch (Exception e){
+            System.out.println("Failed");
+        }
     }
 }

@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class Server {
-    public static final  int DEFAULT_PORT = 2345;
+    public static final  int DEFAULT_PORT = 8080;
     private static final List<ClientHandler> handlers = new ArrayList<>();
     private ServerSocket serverSocket = null;
     private QueueHandler queueHandler = null;
@@ -29,6 +29,7 @@ public class Server {
     public void StartServer(int port) throws Exception{
         serverSocket = new ServerSocket(port);
         queueHandler = new QueueHandler(this);
+        new Thread(queueHandler).start();
         System.out.println("Server started, listening on: " + port);
         while (true) {
             System.out.println("Waiting for a Client");
@@ -50,15 +51,13 @@ public class Server {
                 }
             }
 
-            ClientHandler clientHandler = new ClientHandler(id, socket, queueHandler);
+            ClientHandler clientHandler = new ClientHandler(id, socket, this);
             new Thread(clientHandler).start();
             handlers.add(clientHandler);
         }
     }
 
     public void ServerCommands(String command){
-        System.out.println(command);
-
         String[] commandSplit = command.split("#"), commandValues = new String[commandSplit.length - 1];
         String commandType = commandSplit[0];
         for(int i = 1; i < commandValues.length; i++)
@@ -72,6 +71,7 @@ public class Server {
                 if(i != handlers.size() - 1)
                     allMembers += ",";
             }
+            System.out.println("C: " + allMembers);
             for (ClientHandler handler: handlers)
                 handler.PrintString(allMembers);
         } else if(commandType.equals("CLOSE")){
