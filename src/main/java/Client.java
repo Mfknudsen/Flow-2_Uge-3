@@ -16,23 +16,18 @@ public class Client {
 
             boolean keepRunning = true;
             Socket socket = new Socket("localhost", 8080);
-            Scanner scanner = new Scanner(socket.getInputStream());
             PrintStream pw = new PrintStream(socket.getOutputStream(), true);
 
-            DataInputStream data = new DataInputStream(socket.getInputStream());
+            ClientUpdator updator = new ClientUpdator(socket);
+            new Thread(updator).start();
 
-            while (keepRunning){
+            while (keepRunning) {
                 String msg = keyboardScanner.nextLine();
                 pw.println(msg);
-                System.out.println("Message Sent");
-                String s = scanner.nextLine();
-                System.out.println(s);
-                System.out.println("Message Received");
-
-                keepRunning = !s.equals("");
             }
 
-                socket.close();
+            socket.close();
+            updator.End();
         } catch (Exception e) {
             e.printStackTrace();
         }

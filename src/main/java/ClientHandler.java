@@ -12,12 +12,11 @@ public class ClientHandler implements Runnable{
     private int id = -1;
     private String name = "";
     private Socket socket = null;
-    private Server serverReference = null;
     private PrintWriter pw = null;
     private Scanner scanner = null;
     private Server server;
 
-    boolean keepRunning = false;
+    boolean keepRunning = true;
 
     public ClientHandler(int id, Socket socket, Server server) {
         this.id = id;
@@ -27,38 +26,37 @@ public class ClientHandler implements Runnable{
         try {
             this.scanner = new Scanner(socket.getInputStream());
             this.pw = new PrintWriter(socket.getOutputStream(), true);
-            System.out.println("Client Handler Ready: " + id);
         } catch (Exception e){
         }
     }
 
-    public boolean HandleCommand(String command){
+    public boolean HandleCommand(String command) {
         String[] commandSplit = command.split("#");
         String commandType = commandSplit[0];
         String[] commandValues = new String[commandSplit.length - 1];
         for (int i = 1; i < commandSplit.length; i++)
             commandValues[i - 1] = commandSplit[i];
 
-        if(!connected){
-            if(commandType.equals("CONNECT") && commandValues.length > 0) {
+        if (!connected) {
+            if (commandType.equals("CONNECT")) {
                 connected = true;
                 name = commandValues[0];
+                server.ServerCommands("ONLINE#");
                 return true;
             }
 
             return false;
-        }
-
-        switch (commandType) {
-            case "CLOSE":
+        } else {
+            if (commandType.equals("CLOSE")) {
                 server.ServerCommands("CLOSE#" + id + "#" + 0);
                 return false;
-            case "SEND":
+            } else if (commandType.equals("SEND")) {
                 server.ServerCommands("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
                 return true;
-            default:
+            } else {
                 server.ServerCommands("CLOSE#" + id + "#" + 1);
                 return false;
+            }
         }
     }
 
@@ -66,25 +64,11 @@ public class ClientHandler implements Runnable{
     public void run() {
         try {
             String message = "";
-            //Connection
-            try {
-                message = scanner.nextLine();
-                String[] splitMsg = message.split("#");
-
-                if(splitMsg[0].equals("CONNECT")){
-                    name = splitMsg[1];
-                    keepRunning = true;
-                    server.ServerCommands("ONLINE#");
-                } else
-                    throw new Exception();
-            } catch (Exception e){
-                server.ServerCommands("CLOSE#"+id+"#"+1);
-            }
-
             //Commands
             while (keepRunning) {
                 try {
                     message = scanner.nextLine();
+                    System.out.println(id + ": " + message);
                 } catch (Exception e){
                     keepRunning = false;
                     server.ServerCommands("CLOSE#"+id+"#"+2);
@@ -97,6 +81,7 @@ public class ClientHandler implements Runnable{
 
             socket.close();
         } catch (Exception e){
+            e.printStackTrace();
             server.ServerCommands("CLOSE#"+id+"#"+2);
         }
     }
