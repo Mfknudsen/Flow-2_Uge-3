@@ -14,22 +14,25 @@ public class Client {
             //Socket socket = new Socket(ip, Integer.parseInt(port));
             */
 
+            boolean keepRunning = true;
             Socket socket = new Socket("localhost", 8080);
             Scanner scanner = new Scanner(socket.getInputStream());
             PrintStream pw = new PrintStream(socket.getOutputStream(), true);
 
             DataInputStream data = new DataInputStream(socket.getInputStream());
 
-            while (socket.isConnected()){
+            while (keepRunning){
                 String msg = keyboardScanner.nextLine();
                 pw.println(msg);
+                System.out.println("Message Sent");
+                String s = scanner.nextLine();
+                System.out.println(s);
+                System.out.println("Message Received");
 
-                System.out.println((String) data.readUTF());
-                System.out.println("end");
-                //String s = scanner.nextLine();
-                //System.out.println(s);
-                //System.out.println("Message Received");
+                keepRunning = !s.equals("");
             }
+
+                socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

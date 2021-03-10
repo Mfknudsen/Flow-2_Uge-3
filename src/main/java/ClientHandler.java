@@ -26,7 +26,7 @@ public class ClientHandler implements Runnable{
 
         try {
             this.scanner = new Scanner(socket.getInputStream());
-            this.pw = new PrintWriter(socket.getOutputStream());
+            this.pw = new PrintWriter(socket.getOutputStream(), true);
             System.out.println("Client Handler Ready: " + id);
         } catch (Exception e){
         }
