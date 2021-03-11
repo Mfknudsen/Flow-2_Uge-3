@@ -1,10 +1,6 @@
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Scanner;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
 
 public class ClientHandler implements Runnable{
     boolean connected = false;
@@ -41,20 +37,20 @@ public class ClientHandler implements Runnable{
             if (commandType.equals("CONNECT")) {
                 connected = true;
                 name = commandValues[0];
-                server.ServerCommands("ONLINE#");
+                server.ServerCommands(name,"ONLINE#");
                 return true;
             }
-
+            server.ServerCommands(name,"CLOSE#" + id + "#" + 1);
             return false;
         } else {
             if (commandType.equals("CLOSE")) {
-                server.ServerCommands("CLOSE#" + id + "#" + 0);
+                server.ServerCommands(name,"CLOSE#" + id + "#" + 0);
                 return false;
             } else if (commandType.equals("SEND")) {
-                server.ServerCommands("MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
+                server.ServerCommands(name,"MESSAGE#" + commandValues[0] + "#" + commandValues[1]);
                 return true;
             } else {
-                server.ServerCommands("CLOSE#" + id + "#" + 1);
+                server.ServerCommands(name,"CLOSE#" + id + "#" + 1);
                 return false;
             }
         }
@@ -71,18 +67,19 @@ public class ClientHandler implements Runnable{
                     System.out.println(id + ": " + message);
                 } catch (Exception e){
                     keepRunning = false;
-                    server.ServerCommands("CLOSE#"+id+"#"+2);
+                    server.ServerCommands(name, "CLOSE#"+id+"#"+2);
                     continue;
                 }
 
-                if (keepRunning)
+                if(keepRunning)
                     keepRunning = HandleCommand(message);
-            }
 
-            socket.close();
+                System.out.println(keepRunning);
+
+            }
         } catch (Exception e){
             e.printStackTrace();
-            server.ServerCommands("CLOSE#"+id+"#"+2);
+            server.ServerCommands(name,"CLOSE#"+id+"#"+2);
         }
     }
 
@@ -110,11 +107,7 @@ public class ClientHandler implements Runnable{
     }
 
     public void PrintString(String toPrint){
-        try{
-            pw.println(toPrint);
-            System.out.println("Print for " + id + ": " + toPrint);
-        } catch (Exception e){
-            System.out.println("Failed");
-        }
+        pw.println(toPrint);
+        System.out.println("Print for " + id + ": " + toPrint);
     }
 }
